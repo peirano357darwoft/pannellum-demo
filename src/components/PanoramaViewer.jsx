@@ -1,7 +1,6 @@
-// src/components/PanoramaViewer.js
 import React, { useRef, useEffect, useState } from 'react';
 import { Pannellum } from 'pannellum-react';
-// import 'pannellum-react/lib/pannellum.css';
+import './styles/PanoramaViewer.css';
 
 const PanoramaViewer = (
     { 
@@ -16,18 +15,37 @@ const PanoramaViewer = (
   const pannellumRef = useRef(null);
   const [parsedSource, setParsedSource] = useState(null);
   const [currentScene, setCurrentScene] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [modalPosition, setModalPosition] = useState({ x: 0, y: 0 });
 
-  let elem = document.getElementsByClassName('pnlm-dragfix')[0];
-  
-  var old_element = document.getElementsByClassName('pnlm-dragfix')[0];
-  if ( old_element   ){
-    console.log('entro')
-    var new_element = old_element.cloneNode(true);
-    old_element.parentNode.replaceChild(new_element, old_element);
-  }
+  useEffect(() => {
+    const handleRightClick = (event) => {
+      event.preventDefault();
+      setModalPosition({ x: event.clientX, y: event.clientY });
+      setShowModal(true);
+    };
 
+    const attachRightClickListener = () => {
+      const elements = document.getElementsByClassName('pnlm-container');
+      const elementsArray = Array.from(elements);
+      elementsArray.forEach(element => {
+        element.addEventListener('contextmenu', handleRightClick);
+      });
 
+      return () => {
+        elementsArray.forEach(element => {
+          element.removeEventListener('contextmenu', handleRightClick);
+        });
+      };
+    };
 
+    const timer = setTimeout(attachRightClickListener, 1000);
+
+    return () => {
+      clearTimeout(timer);
+      attachRightClickListener();
+    };
+  }, []);
 
   useEffect(() => {
     if (source) {
@@ -73,13 +91,23 @@ const PanoramaViewer = (
     if (newScene) {
         newScene.pitch = pitch;
         newScene.yaw = yaw;
-        console.log( 'set this scene: ', newScene)
+        console.log('set this scene: ', newScene);
         setCurrentScene(newScene);
     }
   };
 
+  const handleAddSpot = () => {
+    setShowModal(false);
+    console.log('Añadir Spot');
+  };
+
+  const handleAddObra = () => {
+    setShowModal(false);
+    console.log('Añadir Obra');
+  };
+
   return (
-    <div>
+    <div className='panellumContainer'>
       {currentScene && (
         <Pannellum
           ref={pannellumRef}
@@ -91,21 +119,27 @@ const PanoramaViewer = (
           autoLoad
           {...props}
         >
-            {currentScene.hotSpot.map((hotspot, index) => (
-                <Pannellum.Hotspot
-                    key={index}
-                    type={"custom"}
-                    pitch={hotspot.pitch}
-                    yaw={hotspot.yaw}
-                    cssClass={hotspot.cssClass}
-                    handleClick={() => {
-                        if (hotspot.type === 'navigation') {
-                            handleNavigationClick(hotspot.scene, hotspot.pitch, hotspot.yaw);
-                        }
-                    }}
-                />
-            ))}
+          {currentScene.hotSpot.map((hotspot, index) => (
+            <Pannellum.Hotspot
+              key={index}
+              type={"custom"}
+              pitch={hotspot.pitch}
+              yaw={hotspot.yaw}
+              cssClass={hotspot.cssClass}
+              handleClick={() => {
+                if (hotspot.type === 'navigation') {
+                  handleNavigationClick(hotspot.scene, hotspot.pitch, hotspot.yaw);
+                }
+              }}
+            />
+          ))}
         </Pannellum>
+      )}
+      {showModal && (
+        <div className="contextMenu" style={{ top: modalPosition.y, left: modalPosition.x }}>
+          <button onClick={handleAddSpot}>Añadir Spot</button>
+          <button onClick={handleAddObra}>Añadir Obra</button>
+        </div>
       )}
       <button onClick={onSave}>Save</button>
     </div>

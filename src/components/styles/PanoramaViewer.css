@@ -1,0 +1,14 @@
+.contextMenu {
+    position: absolute;
+    background-color: white;
+    border: 1px solid black;
+    padding: 10px;
+    z-index: 1000;
+  }
+  
+  .contextMenu button {
+    display: block;
+    margin: 5px 0;
+    width: 100%;
+  }
+  
